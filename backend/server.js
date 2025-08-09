@@ -27,7 +27,7 @@ app.use('/api/students', studentRoutes);
 app.use('/api/courses', courseRoutes);
 app.use('/api/faculty', facultyRoutes);
 app.use('/api/attendance', attendanceRoutes);
-
+app.use('/api/attendance', protect, attendanceRoutes);
 // Function to create default admin if not exists
 async function createDefaultAdmin() {
   try {
