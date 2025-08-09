@@ -18,7 +18,7 @@ const authRoutes = require('./routes/authRoutes');
 const studentRoutes = require('./routes/studentRoutes');
 const courseRoutes = require('./routes/courseRoutes');
 const facultyRoutes = require('./routes/facultyRoutes');
-const authRoutes = require('./routes/auth');
+
 const attendanceRoutes = require('./routes/attendance');
 const { protect } = require('./middleware/authMiddleware');
 

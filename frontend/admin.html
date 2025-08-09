@@ -1,6 +1,23 @@
 <!doctype html>
 <html>
 <head>
+  <style>
+    h2{
+        text-align:center;
+      }
+      h4{
+        text-align:center;
+      }
+      table{
+        text-align:center;
+      }
+    body {
+  background-image: url('assets/studentbg1.jpg');
+  background-repeat: no-repeat;
+  background-attachment: fixed;
+  background-size: cover;
+}
+  </style>
   <meta charset="utf-8">
   <title>Admin - St Teresa College of Engineering</title>
   <meta name="viewport" content="width=device-width,initial-scale=1">
@@ -11,16 +28,17 @@
 <nav class="navbar navbar-dark bg-primary"><div class="container"><a class="navbar-brand" href="../index.html">St Teresa College of Engineering</a></div></nav>
 <div class="container py-4">
   <h2>Admin Dashboard</h2>
+  <br>
   <div class="row">
     <div class="col-md-6">
       <h4>Students</h4>
-      <button class="btn btn-success mb-2" id="addStudentBtn">Add Student</button>
       <table class="table table-striped" id="studentsTable"><thead><tr><th>Name</th><th>Email</th><th>Course</th><th>Actions</th></tr></thead><tbody></tbody></table>
+      <button class="btn btn-success mb-2" id="addStudentBtn">Add Student</button>
     </div>
     <div class="col-md-6">
       <h4>Courses</h4>
-      <button class="btn btn-success mb-2" id="addCourseBtn">Add Course</button>
       <table class="table table-striped" id="coursesTable"><thead><tr><th>Code</th><th>Title</th><th>Credits</th><th>Actions</th></tr></thead><tbody></tbody></table>
+      <button class="btn btn-success mb-2" id="addCourseBtn">Add Course</button>
     </div>
   </div>
 </div>
