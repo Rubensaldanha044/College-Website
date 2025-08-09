@@ -21,6 +21,9 @@ const userSchema = new mongoose.Schema(
       required: [true, "Password is required"],
       minlength: 6
     },
+    rollNumber: { type: Number },
+    class: { type: String, required: true },
+
     role: {
       type: String,
       enum: ['admin', 'faculty', 'student'],

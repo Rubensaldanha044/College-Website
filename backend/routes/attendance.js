@@ -1,144 +1,68 @@
 const express = require('express');
+const router = express.Router();
 const Attendance = require('../models/Attendance');
 const User = require('../models/User');
-const router = express.Router();
+const { protect } = require('../middleware/authMiddleware');
 
-// Middleware to check role
-function requireFacultyOrAdmin(req, res, next) {
-  if (req.user.role === 'faculty' || req.user.role === 'admin') {
-    return next();
-  }
-  return res.status(403).json({ message: 'Only faculty/admin can mark attendance' });
-}
-
-// ✅ Mark Attendance
-router.post('/mark', requireFacultyOrAdmin, async (req, res) => {
+// ✅ Get students by class
+router.get('/students/class/:className', protect, async (req, res) => {
   try {
-    const { studentId, status, date } = req.body;
-
-    // Ensure student exists
-    const student = await User.findById(studentId);
-    if (!student || student.role !== 'student') {
-      return res.status(404).json({ message: 'Student not found' });
-    }
-
-    const attendance = await Attendance.findOneAndUpdate(
-      { student: studentId, date: date || new Date().setHours(0, 0, 0, 0) },
-      { status, markedBy: req.user._id, date: date || new Date() },
-      { upsert: true, new: true }
-    );
-
-    res.json({ message: 'Attendance marked', attendance });
+    const students = await User.find({ role: 'student', class: req.params.className })
+      .select('name _id class rollNumber');
+    res.json(students);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    res.status(500).json({ message: `Error fetching students: ${error.message}` });
   }
 });
 
-// ✅ View Attendance for a Student
-router.get('/student/:id', async (req, res) => {
-  try {
-    const records = await Attendance.find({ student: req.params.id })
-      .populate('markedBy', 'name')
-      .sort({ date: -1 });
-    res.json(records);
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
-});
-
-// ✅ View Attendance for a Date
-router.get('/date/:date', async (req, res) => {
-  try {
-    const day = new Date(req.params.date);
-    const records = await Attendance.find({ date: day })
-      .populate('student', 'name')
-      .populate('markedBy', 'name');
-    res.json(records);
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
-});
-
-module.exports = router;
-const express = require('express');
-const Attendance = require('../models/Attendance');
-const User = require('../models/User');
-const router = express.Router();
-
-// Middleware to check role
-function requireFacultyOrAdmin(req, res, next) {
-  if (req.user.role === 'faculty' || req.user.role === 'admin') {
-    return next();
-  }
-  return res.status(403).json({ message: 'Only faculty/admin can mark attendance' });
-}
-
-/**
- * ✅ BULK Mark Attendance
- * Body format:
- * {
- *   "date": "2025-08-09",
- *   "records": [
- *       { "studentId": "64d8b3e1c0a...", "status": "present" },
- *       { "studentId": "64d8b3e1c0b...", "status": "absent" }
- *   ]
- * }
- */
-router.post('/mark-bulk', requireFacultyOrAdmin, async (req, res) => {
+// ✅ Mark bulk attendance
+router.post('/mark-bulk', protect, async (req, res) => {
   try {
     const { date, records } = req.body;
-    const attendanceDate = new Date(date || new Date().setHours(0,0,0,0));
 
-    const results = [];
+    // Normalize date to start of day
+    const attendanceDate = new Date(date);
+    attendanceDate.setHours(0, 0, 0, 0);
 
-    for (const record of records) {
-      const student = await User.findById(record.studentId);
-      if (!student || student.role !== 'student') {
-        results.push({ studentId: record.studentId, status: 'failed', reason: 'Invalid student' });
-        continue;
+    // Optional: Remove duplicates if attendance already exists
+    for (const r of records) {
+      const existing = await Attendance.findOne({
+        student: r.studentId,
+        date: attendanceDate
+      });
+      if (existing) {
+        return res.status(400).json({ message: `Attendance already marked for ${r.studentId}` });
       }
-
-      const attendance = await Attendance.findOneAndUpdate(
-        { student: record.studentId, date: attendanceDate },
-        { status: record.status, markedBy: req.user._id, date: attendanceDate },
-        { upsert: true, new: true }
-      );
-
-      results.push({ studentId: record.studentId, status: 'success', attendance });
     }
 
-    res.json({ message: 'Bulk attendance processed', results });
+    const attendanceRecords = records.map(r => ({
+      student: r.studentId,
+      date: attendanceDate,
+      status: r.status
+    }));
+
+    await Attendance.insertMany(attendanceRecords);
+    res.json({ message: 'Attendance marked successfully' });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    res.status(500).json({ message: `Error marking attendance: ${error.message}` });
   }
 });
 
-/**
- * ✅ View Attendance for a Student
- */
-router.get('/student/:id', async (req, res) => {
+// ✅ View attendance by date
+router.get('/date/:date', protect, async (req, res) => {
   try {
-    const records = await Attendance.find({ student: req.params.id })
-      .populate('markedBy', 'name')
-      .sort({ date: -1 });
-    res.json(records);
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
-});
+    const date = new Date(req.params.date);
+    date.setHours(0, 0, 0, 0);
+    const nextDate = new Date(date);
+    nextDate.setDate(nextDate.getDate() + 1);
 
-/**
- * ✅ View Attendance for a Date
- */
-router.get('/date/:date', async (req, res) => {
-  try {
-    const day = new Date(req.params.date);
-    const records = await Attendance.find({ date: day })
-      .populate('student', 'name')
-      .populate('markedBy', 'name');
+    const records = await Attendance.find({
+      date: { $gte: date, $lt: nextDate }
+    }).populate('student', 'name class rollNumber');
+
     res.json(records);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    res.status(500).json({ message: `Error fetching attendance: ${error.message}` });
   }
 });
 

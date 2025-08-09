@@ -1,4 +1,4 @@
-// Run once to seed admin user
+
 const mongoose = require('mongoose');
 const dotenv = require('dotenv');
 dotenv.config();

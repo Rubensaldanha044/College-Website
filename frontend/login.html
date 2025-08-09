@@ -54,5 +54,31 @@ body {
 
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script src="assets/js/auth.js"></script>
+<script>
+$("#loginForm").submit(function(e){
+    e.preventDefault();
+    fetch("/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+            email: $("#email").val(),
+            password: $("#password").val(),
+            role: $("#role").val()
+        })
+    })
+    .then(res => res.json())
+    .then(data => {
+        if(data.user){
+            localStorage.setItem("user", JSON.stringify(data.user));
+            if(data.user.role === "admin") location.href = "admin.html";
+            else if(data.user.role === "faculty") location.href = "faculty.html";
+            else location.href = "student.html";
+        } else {
+            $("#loginMsg").text("Invalid credentials").css("color","red");
+        }
+    });
+});
+</script>
+
 </body>
 </html>

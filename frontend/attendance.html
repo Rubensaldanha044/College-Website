@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mark Attendance - Alpha College</title>
+    <title>Mark Attendance - St Theresa College of Engineering</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
         body {
@@ -24,7 +24,7 @@
     <!-- Navbar -->
     <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
         <div class="container">
-            <a class="navbar-brand" href="index.html">Alpha College</a>
+            <a class="navbar-brand" href="index.html">St Teresa College of Engineering</a>
             <button class="navbar-toggler" data-bs-toggle="collapse" data-bs-target="#nav">
                 <span class="navbar-toggler-icon"></span>
             </button>
@@ -80,6 +80,7 @@
             $("#studentList").html(studentHTML);
         });
 
+        
         // Handle form submission
         $("#attendanceForm").on("submit", function(e) {
             e.preventDefault();
@@ -104,5 +105,49 @@
             });
         });
     </script>
+    <script>
+document.getElementById('attendanceForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    const studentId = document.getElementById('student').value;
+    const status = document.querySelector('input[name="status"]:checked').value;
+
+    const res = await fetch('/api/attendance', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ studentId, status })
+    });
+
+    const data = await res.json();
+    alert(data.message || 'Attendance saved!');
+});
+</script>
+<script>
+function saveAttendance() {
+    const date = document.getElementById("attendance-date").value;
+    const checkboxes = document.querySelectorAll("input[name='student']:checked");
+    const students = Array.from(checkboxes).map(cb => cb.value);
+
+    fetch("http://localhost:5000/save_attendance", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ date, students })
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.success) {
+            alert("Attendance saved successfully!");
+        } else {
+            alert("Error: " + (data.error || "Unknown error"));
+        }
+    })
+    .catch(err => {
+        console.error("Fetch error:", err);
+        alert("Error saving attendance");
+    });
+}
+</script>
+
+
 </body>
 </html>

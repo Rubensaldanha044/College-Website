@@ -29,5 +29,19 @@ body {
 </div>
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script src="assets/js/student.js"></script>
+<script>
+$(document).ready(function(){
+    fetch("/api/attendance")
+    .then(res => res.json())
+    .then(data => {
+        let html = "";
+        data.forEach(a => {
+            html += `<tr><td>${a.date}</td><td>${a.course}</td><td>${a.present.includes("STUDENT_ID") ? "Present" : "Absent"}</td></tr>`;
+        });
+        $("#myAttendance tbody").html(html);
+    });
+});
+</script>
+
 </body>
 </html>
