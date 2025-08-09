@@ -1,4 +1,5 @@
 $(function(){
+  
   const courses = [
     {code:'CS101', title:'Intro to Computer Science', credits:3},
     {code:'DS200', title:'Data Structures', credits:4},
