@@ -18,8 +18,7 @@ const authRoutes = require('./routes/authRoutes');
 const studentRoutes = require('./routes/studentRoutes');
 const courseRoutes = require('./routes/courseRoutes');
 const facultyRoutes = require('./routes/facultyRoutes');
-const authRoutes = require('./routes/auth');
-const attendanceRoutes = require('./routes/attendance');
+const attendanceRoutes = require('./routes/attendanceRoutes');
 const { protect } = require('./middleware/authMiddleware');
 
 app.use('/api/auth', authRoutes);
@@ -27,7 +26,7 @@ app.use('/api/students', studentRoutes);
 app.use('/api/courses', courseRoutes);
 app.use('/api/faculty', facultyRoutes);
 app.use('/api/attendance', attendanceRoutes);
-
+app.use('/api/attendance', protect, attendanceRoutes);
 // Function to create default admin if not exists
 async function createDefaultAdmin() {
   try {
