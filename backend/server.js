@@ -18,7 +18,9 @@ const authRoutes = require('./routes/authRoutes');
 const studentRoutes = require('./routes/studentRoutes');
 const courseRoutes = require('./routes/courseRoutes');
 const facultyRoutes = require('./routes/facultyRoutes');
-const attendanceRoutes = require('./routes/attendanceRoutes');
+const authRoutes = require('./routes/auth');
+const attendanceRoutes = require('./routes/attendance');
+const { protect } = require('./middleware/authMiddleware');
 
 app.use('/api/auth', authRoutes);
 app.use('/api/students', studentRoutes);
@@ -48,7 +50,7 @@ async function createDefaultAdmin() {
 }
 
 // Connect DB and start server
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT ||5000;
 mongoose.connect(process.env.MONGO_URI)
   .then(async () => {
     console.log('✅ MongoDB connected');
