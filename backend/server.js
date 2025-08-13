@@ -28,6 +28,16 @@ app.use('/api/courses', courseRoutes);
 app.use('/api/faculty', facultyRoutes);
 app.use('/api/attendance', attendanceRoutes);
 app.use('/api/attendance', protect, attendanceRoutes);
+app.use('/api/attendance', require('./routes/attendance'));
+
+
+
+app.get('/student-dashboard', protect, (req, res) => {
+  res.sendFile(path.join(__dirname, '..', 'frontend', 'student_dashboard.html'));
+});
+
+
+
 // Function to create default admin if not exists
 async function createDefaultAdmin() {
   try {
@@ -50,7 +60,7 @@ async function createDefaultAdmin() {
 }
 
 // Connect DB and start server
-const PORT = process.env.PORT ||5000;
+const PORT = process.env.PORT ||4000;
 mongoose.connect(process.env.MONGO_URI)
   .then(async () => {
     console.log('✅ MongoDB connected');

@@ -56,6 +56,8 @@ userSchema.methods.matchPassword = async function (plainPassword) {
   return bcrypt.compare(plainPassword, this.password);
 };
 
+
+
 // ✅ Static method to create a default admin user if not exists
 userSchema.statics.createDefaultAdmin = async function () {
   try {

@@ -15,17 +15,23 @@ router.get('/students/class/:className', protect, async (req, res) => {
   }
 });
 
-// ✅ Mark bulk attendance
+// ✅ Mark bulk attendance (API use, e.g., via AJAX)
 router.post('/mark-bulk', protect, async (req, res) => {
   try {
     const { date, records } = req.body;
 
-    // Normalize date to start of day
+    if (!date || !records || !Array.isArray(records) || records.length === 0) {
+      return res.status(400).json({ message: 'Date and records[] are required' });
+    }
+
     const attendanceDate = new Date(date);
     attendanceDate.setHours(0, 0, 0, 0);
 
-    // Optional: Remove duplicates if attendance already exists
-    for (const r of records) {
+    // Remove duplicates from incoming data
+    const uniqueRecords = [...new Map(records.map(r => [r.studentId, r])).values()];
+
+    // Prevent duplicate entries in DB
+    for (const r of uniqueRecords) {
       const existing = await Attendance.findOne({
         student: r.studentId,
         date: attendanceDate
@@ -35,16 +41,42 @@ router.post('/mark-bulk', protect, async (req, res) => {
       }
     }
 
-    const attendanceRecords = records.map(r => ({
+    const attendanceRecords = uniqueRecords.map(r => ({
       student: r.studentId,
       date: attendanceDate,
       status: r.status
     }));
 
     await Attendance.insertMany(attendanceRecords);
-    res.json({ message: 'Attendance marked successfully' });
+    res.json({ message: '✅ Attendance marked successfully' });
   } catch (error) {
     res.status(500).json({ message: `Error marking attendance: ${error.message}` });
+  }
+});
+
+// ✅ Mark attendance via faculty form (single request with present list)
+router.post('/', protect, async (req, res) => {
+  try {
+    const { course, date, present } = req.body;
+
+    if (!course || !date || !present || !Array.isArray(present) || present.length === 0) {
+      return res.status(400).json({ message: 'Course, date, and present[] are required' });
+    }
+
+    const attendanceDate = new Date(date);
+    attendanceDate.setHours(0, 0, 0, 0);
+
+    const attendanceRecords = present.map(studentId => ({
+      student: studentId,
+      course,
+      date: attendanceDate,
+      status: 'present'
+    }));
+
+    await Attendance.insertMany(attendanceRecords);
+    res.json({ message: '✅ Attendance recorded successfully' });
+  } catch (error) {
+    res.status(500).json({ message: `Error saving attendance: ${error.message}` });
   }
 });
 

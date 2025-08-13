@@ -2,79 +2,96 @@
 <html>
 <head>
   <style>
-    table{
-        text-align:center;
-      }
-    h2{
-        text-align:center;
-      }
-      h4{
-        text-align:center;
-      }
+    table { text-align: center; }
+    h2, h4 { text-align: center; }
     body {
-  background-image: url('assets/facultybg1.jpg');
-  background-repeat: no-repeat;
-  background-attachment: fixed;
-  background-size: cover;
-}
+      background-image: url('assets/facultybg1.jpg');
+      background-repeat: no-repeat;
+      background-attachment: fixed;
+      background-size: cover;
+    }
   </style>
   <meta charset="utf-8">
   <title>Faculty - St Teresa College of Engineering</title>
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-  <link rel="stylesheet" href="assets/css/style.css">
 </head>
 <body>
-<nav class="navbar navbar-dark bg-primary"><div class="container"><a class="navbar-brand" href="index.html">St Teresa College of Engineering</a></div></nav>
+<nav class="navbar navbar-dark bg-primary">
+  <div class="container">
+    <a class="navbar-brand" href="index.html">St Teresa College of Engineering</a>
+  </div>
+</nav>
+
 <div class="container py-4">
   <h2>Faculty Dashboard</h2>
+
+  <!-- Attendance Form -->
   <form id="attendanceForm" class="mb-3">
     <div class="row">
       <div class="col-md-4"><input id="f_course" class="form-control" placeholder="Course Code" required></div>
       <div class="col-md-4"><input id="f_date" class="form-control" type="date" required></div>
-      <div class="col-md-4"><input id="f_present" class="form-control" placeholder="Present Student IDs (comma-separated)"></div>
+      <div class="col-md-4"><input id="f_present" class="form-control" placeholder="Present Student IDs (comma-separated)" required></div>
     </div>
     <button class="btn btn-primary mt-2">Mark Attendance</button>
   </form>
 
-    <h4>Attendance Records</h4>
-    <table class="table" id="attendanceTable"><thead><tr><th>Date</th><th>Course</th><th>Present</th></tr></thead><tbody></tbody></table>
+  <h4>Attendance Records</h4>
+  <table class="table table-bordered table-striped" id="attendanceTable">
+    <thead>
+      <tr><th>Date</th><th>Course</th><th>Present</th></tr>
+    </thead>
+    <tbody></tbody>
+  </table>
 </div>
-<script>
-$("#attendanceForm").submit(function(e){
-    e.preventDefault();
-    fetch("/api/attendance", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-            course: $("#f_course").val(),
-            date: $("#f_date").val(),
-            present: $("#f_present").val().split(",").map(s => s.trim())
-        })
-    })
-    .then(res => res.json())
-    .then(data => {
-        alert(data.msg || "Attendance saved");
-        loadAttendance();
-    })
-    .catch(err => console.error(err));
-});
-
-function loadAttendance(){
-    fetch("/api/attendance")
-    .then(res => res.json())
-    .then(data => {
-        let html = "";
-        data.forEach(a => {
-            html += `<tr><td>${a.date}</td><td>${a.course}</td><td>${a.present.join(", ")}</td></tr>`;
-        });
-        $("#attendanceTable tbody").html(html);
-    });
-}
-loadAttendance();
-</script>
 
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-<script src="assets/js/faculty.js"></script>
+<script>
+const token = localStorage.getItem('token'); // Auth token from login
+
+// Submit Attendance
+$("#attendanceForm").submit(async function(e) {
+  e.preventDefault();
+
+  const course = $("#f_course").val();
+  const date = $("#f_date").val();
+  const present = $("#f_present").val().split(",").map(s => s.trim());
+
+  try {
+    const res = await fetch("/api/attendance", {
+      method: "POST",
+      headers: { 
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${token}`
+      },
+      body: JSON.stringify({ course, date, present })
+    });
+
+    const data = await res.json();
+    alert(data.message || "Attendance saved");
+    loadAttendance();
+  } catch (err) {
+    console.error(err);
+    alert("Error saving attendance");
+  }
+});
+
+// Load Attendance Records
+async function loadAttendance() {
+  try {
+    const res = await fetch(`/api/attendance/date/${$("#f_date").val()}`, {
+      headers: { "Authorization": `Bearer ${token}` }
+    });
+    const data = await res.json();
+    let html = "";
+    data.forEach(a => {
+      html += `<tr><td>${new Date(a.date).toLocaleDateString()}</td><td>${a.course || '-'}</td><td>${a.student ? a.student.name : '-'}</td></tr>`;
+    });
+    $("#attendanceTable tbody").html(html);
+  } catch (err) {
+    console.error(err);
+  }
+}
+</script>
 </body>
 </html>
